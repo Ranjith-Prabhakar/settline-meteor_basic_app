@@ -1,11 +1,8 @@
 
-
 import { Meteor } from 'meteor/meteor';
 import { LinksCollection } from '/imports/api/links';
 
-
 Meteor.startup(async () => {
-
   Meteor.methods({
     addUser:async(userName)=>{
       await LinksCollection.insertAsync({ userName, createdAt: new Date() });

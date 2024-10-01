@@ -1,0 +1,8 @@
+1.no modules inside of the import folder will be bundled but send to when they needed 
+ if any other files imports any of the functions/objects/variables from this modules only they will
+ send to 
+2.we can't import any data from any modules which are written inside the server folder to any modules 
+  which is written inside the client folder VICE VERSA 
+3.even if there folders having names like server or clinent inside the import the rule will be applied 
+  on them too
+    
