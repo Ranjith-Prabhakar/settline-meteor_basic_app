@@ -12,7 +12,6 @@ Meteor.startup(async () => {
     },
     deleteUser:async(id)=>{
       await LinksCollection.removeAsync(id)
-      Meteor.publish('delete',()=>console.log("deleted id is ",id))
     },
     updateUser:async({id,data})=>{
       console.log("data",data)

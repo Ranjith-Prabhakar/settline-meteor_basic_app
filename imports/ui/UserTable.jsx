@@ -8,8 +8,6 @@ export const UserTable = () => {
   const links = useFind(() => LinksCollection.find());
 
 
-  // deleteEvent
-  Meteor.subscribe('delete',(arg)=>arg())
   
   const [editableUserId, setEditableUserId] = useState(null); 
 
