@@ -59,3 +59,9 @@
   
   In MongoDB, you might design a document that has complex fields (such as an array of objects), but in Meteor, if any part of that array changes, the entire array has to be resent.
   This can lead to unnecessary network traffic if you're frequently modifying subfields.
+*.After subscribing, data is stored in the client’s local Minimongo cache. To display it in the UI, you need to query the collection.  
+
+*When you subscribe to data in Meteor, the server sends specific documents to the client, which are stored in the client-side Minimongo database. The client can then query this local collection to use the data in the UI.
+ but Different subscriptions push data to the same collection: In Meteor, multiple subscriptions can send data to the same local collection on the client. For example, if you have two different subscriptions to the Lists collection, one for public lists and one for private lists, both of these will send documents into the same Lists collection on the client.
+ Querying all data without filters can lead to unexpected results: If you use a general query like Lists.find() (which fetches all documents in the Lists collection), you might accidentally get both public and private lists, even though you may only want one type of list in a particular UI component. This is because Lists.find() doesn’t apply any filters, and it pulls all the documents that have been subscribed to, regardless of which subscription they came from.
+ always query the client-side Minimongo collection with the same filter you used when subscribing to the data. This ensures that you only get the specific subset of data that the server sent based on your subscription, preventing any unexpected or mixed results.
