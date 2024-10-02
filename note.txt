@@ -15,5 +15,36 @@
   on them too
 *. in the server side code meteor follows a syncronous style using  only single thread, which is a little diff than the usuall
    async callback/async/await pattern but behind the hood using fiber meteor manages the concurrency very well
+*.client/compatibility
+    "This folder is for compatibility with JavaScript libraries that rely on variables declared with var at the top level being exported as globals."
+     Older JavaScript libraries, particularly those written before ES6, often rely on global variables. This means they expect variables declared with var at the top level to be accessible across the entire application.
+     In modern JavaScript, files are usually scoped (meaning variables in one file don’t automatically leak to other files), but these older libraries don’t follow this pattern, and they expect their variables to be globally accessible.   
      
-    
+*.meteor introduced a new network communication protocol which is called Distributed Data Protocol( DDP ) this is the underlying mechanism of
+  meteors real time working . because this use websocket under the hood , also if websocket connection isn't alive they will automatically
+  use the http polling
+
+*.once a client establish a connection with the server using this DDP protocol they become syncronous and client could make a 
+  subscription once it happend the server will make publications. once the server send data using the publishing method that will
+  comes to the client and store in the miniMongo which is the local memory of the browser/moblie so that client could 
+  operate various actions we could do with the mongoDb but miniMongo is not exactly as mongodb. anyway if the client make any updates on 
+  miniMongo then it will reflect to the server and will update the database also. it is all possible because of the DDP and meteor reactivity
+
+  creating a miniMongo = const Tasks = new Mongo.Collection('tasks');
+  Insert a document:Tasks.insert({ name: 'Do laundry', completed: false });
+  Query for documents:const task = Tasks.findOne({ name: 'Do laundry' });
+  Update a document:Tasks.update(task._id, { $set: { completed: true } });
+
+  These operations will be mirrored on the server-side MongoDB instance.
+
+  Latency Compensation:
+      Latency compensation is one of the most powerful features of Minimongo. When the client performs an operation (like inserting or updating a document), Minimongo immediately reflects the change on the client, even before the server has confirmed it.
+      This allows the app to feel fast and responsive, as the user doesn’t have to wait for round-trip communication with the server to see the result of their actions.
+      If the server rejects the operation (e.g., due to a validation error), Minimongo will revert the change.
+  Offline Support:
+     Since Minimongo stores data in memory on the client, it offers limited offline support. When a client is temporarily disconnected, it can still interact with the data stored in Minimongo.
+     Once the connection is re-established, Minimongo will sync with the server, sending any local changes to the server and updating the client’s data with any changes that happened on the server during the disconnection.
+*.Sharing Code: You can reuse code between multiple apps by using npm or Atmosphere packages for public modules, or git submodules/symbolic links for private/shared code.
+  Sharing Data: Apps can share data by pointing to the same MongoDB instance or interacting via an API (using DDP for server-server communication).
+  Sharing Accounts: Users can be authenticated across multiple servers by sharing the login token between apps, allowing seamless movement between different parts of the system without needing to log in again.
+  This structure is somewhat aligned with microservices architecture, as you are splitting functionalities (like admin panels or worker processes) into separate services/apps, each potentially with its own scaling and deployment strategy.
