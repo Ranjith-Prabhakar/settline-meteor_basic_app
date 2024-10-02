@@ -1,8 +1,19 @@
-1.no modules inside of the import folder will be bundled but send to when they needed 
+*.basically meteor has a well folder structure
+*.codes written in client folder is the only code will be available to the browser
+*.so as the codes written in the folder server will be accessible only in the server side 
+*.codes written out of these folders will be shared by both still there are folders those couldn't be accessible by either client or server
+*.assets and styles written in the public folder is only accessible by client side codes and also we dont want to put the public directory
+  while using the path
+*.assets and codes in the privet repository is specifically for server
+*.meteor follows a lazy evaluation as well as eager/greedy evaluation 
+*.for lazy evalution it follows a folder structure no modules inside of the import folder will be bundled but send to when they needed 
  if any other files imports any of the functions/objects/variables from this modules only they will
  send to 
-2.we can't import any data from any modules which are written inside the server folder to any modules 
+*.we can't import any data from any modules which are written inside the server folder to any modules 
   which is written inside the client folder VICE VERSA 
-3.even if there folders having names like server or clinent inside the import the rule will be applied 
+*.even if there folders having names like server or clinent inside the import the rule will be applied 
   on them too
+*. in the server side code meteor follows a syncronous style using  only single thread, which is a little diff than the usuall
+   async callback/async/await pattern but behind the hood using fiber meteor manages the concurrency very well
+     
     
