@@ -48,3 +48,14 @@
   Sharing Data: Apps can share data by pointing to the same MongoDB instance or interacting via an API (using DDP for server-server communication).
   Sharing Accounts: Users can be authenticated across multiple servers by sharing the login token between apps, allowing seamless movement between different parts of the system without needing to log in again.
   This structure is somewhat aligned with microservices architecture, as you are splitting functionalities (like admin panels or worker processes) into separate services/apps, each potentially with its own scaling and deployment strategy.
+*.When designing a data schema in Meteor, there are certain aspects of its data loading system and communication protocol (DDP) that influence how you should structure your data, especially when dealing with documents that have subfields that change frequently.
+  Key Concepts:
+  Meteor's DDP and Top-Level Fields:
+  
+  DDP (Distributed Data Protocol) is how Meteor communicates data between the server and client.
+  DDP works at the top level of a document, meaning any change to a subfield within a document results in the entire top-level field being resent over the network.
+  For example, if you have a document that includes an array of sub-documents (like a list of todos), changing one todo requires DDP to resend the entire array of todos, even if only one todo has changed.
+  Inefficiency with Large and Complex Subfields:
+  
+  In MongoDB, you might design a document that has complex fields (such as an array of objects), but in Meteor, if any part of that array changes, the entire array has to be resent.
+  This can lead to unnecessary network traffic if you're frequently modifying subfields.
