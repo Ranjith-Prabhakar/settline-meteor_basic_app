@@ -68,6 +68,32 @@
 *.It also provides simple ways to check login status, log out, and do other user-related tasks using functions like Meteor.userId() (to get the logged-in user’s ID) and Meteor.user() (to get user details).
 *.A key feature of DDP is that it tracks the login state with a field called userId. So, when a user logs in, Meteor automatically keeps track of their userId and makes it available throughout your app.
 *.This userId can be accessed easily within Meteor methods (server functions) and publications (data sent from the server to the client) by simply using this.userId. You don’t need to worry about how this tracking works; it's built-in and automatic.
+*.Follow one rule: don’t query the database by username or email directly. Instead, use the Accounts.findUserByUsername and Accounts.findUserByEmail methods provided by Meteor. This will run a query for you that is case-insensitive, so you will always find the user you are looking for.
+
+*.What is the profile field?
+      When a new user registers in Meteor, a field called profile is automatically added to their user account.
+      The idea was that developers could use this profile field to store user-specific data like avatars, names, or bio text.
+      By default, users can edit their own profile data from the client (i.e., their browser), and the profile is automatically sent to 
+      the client for the logged-in user.
+*. The Problem with profile:
+      Having a field that users can edit freely from the client side is risky. For example, if you stored important information like isAdmin 
+      (to check if a user is an admin) in the profile, a malicious user could easily set it to true and give themselves admin privileges!
+      Even if you don't have sensitive data in profile, allowing users to store whatever they want in this field opens the door for them to 
+      fill your database with unnecessary or harmful data.
+*. The Solution:
+      Don’t use the profile field at all. Instead, you can block all client-side updates to user data by using this code:
+     
+      Meteor.users.deny({
+        update() { return true; }
+      });
+
+      This ensures that users can't update their own account data directly from the client.
+*.Meteor’s publication and subscription system, it’s totally fine to publish the same document multiple times with different fields - they 
+  will get merged internally and the client will see a consistent document with all of the fields together. So if you added one custom field, 
+  you should write a publication with that one field.
+*.Take care storing lots of custom data on the user document, particularly data which grows indefinitely, because by default the entire user document is fetched from the database whenever a user tries to log in or out. Plus any calls to (e.g.) Meteor.user().profile.name on the server will fetch the entire user document from the database even though may you only need their name. If you have stored lots of custom data on the user documents this could significantly waste server resources (RAM and CPU).  
+
+
 -----------------------------------------------------------------------------------------------------------------------------------------------
 *.basically meteor has a well folder structure
 *.codes written in client folder is the only code will be available to the browser
