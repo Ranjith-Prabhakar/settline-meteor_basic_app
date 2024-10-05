@@ -1,3 +1,74 @@
+1.Meteor has a well-defined folder structure.
+
+2.Code written in the client folder will be accessible only to the browser.
+
+3.Similarly, code written in the server folder will only be accessible on the server side.
+
+4.Code outside these folders is shared between both client and server, though there are certain folders that aren't accessible by either.
+
+5.Assets and styles in the public folder are only accessible by the client-side code, and you don't need to include the public directory in the path when using these assets.
+
+6.Assets and code in the private folder are specifically for the server.
+
+7.Meteor uses both lazy and eager (greedy) evaluation. For lazy evaluation, Meteor follows a folder structure where modules inside the imports folder are not bundled until they are explicitly imported by other files. Only when a function, object, or variable from one of these modules is imported will it be sent.
+
+8.You cannot import any data from modules inside the server folder into modules in the client folder, and vice versa.
+
+9.Even if folders within the imports directory are named server or client, the same rule applies.
+
+10.On the server side, Meteor follows a synchronous style using a single thread, which differs from the typical async callback/async/await pattern. However, behind the scenes, it uses Fiber to manage concurrency effectively. Meteor has since been updated to support asynchronous code.
+
+11.client/compatibility folder: "This folder is for compatibility with JavaScript libraries that rely on var-declared variables being exported as globals." Older JavaScript libraries, especially those written before ES6, often rely on global variables. Modern JavaScript, however, uses scoped variables, meaning they don't leak across files. The client/compatibility folder ensures these older libraries work in the Meteor environment.
+
+12.Meteor introduced the Distributed Data Protocol (DDP), which is the underlying mechanism for Meteor's real-time functionality. DDP uses WebSocket under the hood, but if the WebSocket connection is unavailable, it falls back to HTTP polling.
+
+13.Once a client establishes a connection with the server using DDP, they become synchronized. The client can subscribe to publications from the server. When data is published by the server, it is stored in the client's miniMongo, which is a local memory-based database similar to MongoDB.
+
+14.Example of creating a miniMongo collection:
+
+    const Tasks = new Mongo.Collection('tasks');
+
+15.Insert a document:
+
+    Tasks.insert({ name: 'Do laundry', completed: false });
+
+16.Query a document:
+
+    const task = Tasks.findOne({ name: 'Do laundry' });
+
+17.Update a document:
+
+
+    Tasks.update(task._id, { $set: { completed: true } });
+
+18.These operations are mirrored on the server-side MongoDB instance.
+
+19.When the server starts, it creates a query observer for each publication. This observer monitors the MongoDB oplog, and if any updates occur, it updates the merge box (a server-side cache) that tracks changes for each client.
+
+20.Initially, when a publication handler runs, it sends the cursor to the client and updates the merge box. After that, for each update, the query observer updates the merge box with only the changed data. This triggers DDP to inform the client, which in turn updates the miniMongo.
+
+21.Latency Compensation:
+
+    Latency compensation is a powerful feature of miniMongo. When the client performs operations like inserting or updating documents, miniMongo immediately reflects the change, making the app feel fast and responsive. If the server rejects the operation (e.g., due to a validation error), the changes in miniMongo are reverted.
+
+22.Offline Support:
+    Since miniMongo stores data in memory, it offers limited offline support. The client can still interact with the data when disconnected. Once reconnected, miniMongo syncs with the server, sending any local changes and updating the client with changes that occurred during the disconnection.
+
+23.Sharing Code and Data:
+    You can reuse code between multiple apps using npm or Atmosphere packages for public modules, or Git submodules/symbolic links for private/shared code. Apps can share data by pointing to the same MongoDB instance or using an API with DDP for server-to-server communication.
+
+24.When designing a data schema in Meteor, consider how DDP works, as it communicates at the top level of a document. Any change to a subfield will result in the entire top-level field being resent. This can be inefficient when frequently modifying subfields.
+
+25.After subscribing to data, it is stored in the client’s local miniMongo cache. Querying this cache is necessary to display the data in the UI. Since multiple subscriptions can send data to the same local collection, it's important to apply the same filters when querying as when subscribing. This ensures you're working with the intended subset of data.
+
+26.Methods and calls in Meteor are used for non-reactive communication. However, if you update a collection via a method, the responsible publisher will inform subscribers of the changes. When a method is called, the client performs a simulation by updating miniMongo and reflecting the change in the UI before the server call completes. After the server call finishes, any updates are applied, and the callback is executed.
+
+*.The accounts-base package is the core part of Meteor's user accounts system.
+*.It gives you a pre-built users collection (database table) to store users, which you can access through Meteor.users.
+*.It also provides simple ways to check login status, log out, and do other user-related tasks using functions like Meteor.userId() (to get the logged-in user’s ID) and Meteor.user() (to get user details).
+*.A key feature of DDP is that it tracks the login state with a field called userId. So, when a user logs in, Meteor automatically keeps track of their userId and makes it available throughout your app.
+*.This userId can be accessed easily within Meteor methods (server functions) and publications (data sent from the server to the client) by simply using this.userId. You don’t need to worry about how this tracking works; it's built-in and automatic.
+-----------------------------------------------------------------------------------------------------------------------------------------------
 *.basically meteor has a well folder structure
 *.codes written in client folder is the only code will be available to the browser
 *.so as the codes written in the folder server will be accessible only in the server side 
@@ -14,11 +85,14 @@
 *.even if there folders having names like server or clinent inside the import the rule will be applied 
   on them too
 *. in the server side code meteor follows a syncronous style using  only single thread, which is a little diff than the usuall
-   async callback/async/await pattern but behind the hood using fiber meteor manages the concurrency very well
+   async callback/async/await pattern but behind the hood using fiber meteor manages the concurrency very well,but it has been updated to async
+   codes
 *.client/compatibility
-    "This folder is for compatibility with JavaScript libraries that rely on variables declared with var at the top level being exported as globals."
-     Older JavaScript libraries, particularly those written before ES6, often rely on global variables. This means they expect variables declared with var at the top level to be accessible across the entire application.
-     In modern JavaScript, files are usually scoped (meaning variables in one file don’t automatically leak to other files), but these older libraries don’t follow this pattern, and they expect their variables to be globally accessible.   
+    "This folder is for compatibility with JavaScript libraries that rely on variables declared with var at the top level being exported as 
+    globals."  Older JavaScript libraries, particularly those written before ES6, often rely on global variables. This means they expect 
+    variables declared with var at the top level to be accessible across the entire application.In modern JavaScript, files are usually 
+    scoped (meaning variables in one file don’t automatically leak to other files), but these older libraries don’t follow this pattern, 
+    and they expect their variables to be globally accessible.   
      
 *.meteor introduced a new network communication protocol which is called Distributed Data Protocol( DDP ) this is the underlying mechanism of
   meteors real time working . because this use websocket under the hood , also if websocket connection isn't alive they will automatically
@@ -37,31 +111,65 @@
 
   These operations will be mirrored on the server-side MongoDB instance.
 
-  Latency Compensation:
-      Latency compensation is one of the most powerful features of Minimongo. When the client performs an operation (like inserting or updating a document), Minimongo immediately reflects the change on the client, even before the server has confirmed it.
-      This allows the app to feel fast and responsive, as the user doesn’t have to wait for round-trip communication with the server to see the result of their actions.
-      If the server rejects the operation (e.g., due to a validation error), Minimongo will revert the change.
-  Offline Support:
-     Since Minimongo stores data in memory on the client, it offers limited offline support. When a client is temporarily disconnected, it can still interact with the data stored in Minimongo.
-     Once the connection is re-established, Minimongo will sync with the server, sending any local changes to the server and updating the client’s data with any changes that happened on the server during the disconnection.
-*.Sharing Code: You can reuse code between multiple apps by using npm or Atmosphere packages for public modules, or git submodules/symbolic links for private/shared code.
+*.in the server when it loads it will create a query observer for each publication means this query observer will always be monitored
+  the mongoDb oplog and if any updates happend on the mongoDb oplog then the query observer will update the merge box which is a 
+  server side cache and which will keep track of all the clients separately.
+
+*.initially once the publication handler executes which will send the cursor to the client and update the mergebox. there after for each update
+  on the collection the query observer will update the merge box with the only change. once it updates it will trigger the DDP and make aware
+  of the client too about the updation ,so as the client also will update the miniMongo.
+     
+
+*.Latency Compensation:
+    Latency compensation is one of the most powerful features of Minimongo. When the client performs an operation (like inserting or 
+    updating a document), Minimongo immediately reflects the change on the client, even before the server has confirmed it.
+    This allows the app to feel fast and responsive, as the user doesn’t have to wait for round-trip communication with the server to see
+     the result of their actions.If the server rejects the operation (e.g., due to a validation error), Minimongo will revert the change.
+     because of the pub/sub
+*.Offline Support:
+   Since Minimongo stores data in memory on the client, it offers limited offline support. When a client is temporarily disconnected, 
+   it can still interact with the data stored in Minimongo.Once the connection is re-established, Minimongo will sync with the server,
+   sending any local changes to the server and updating the client’s data with any changes that happened on the server during the 
+   disconnection.
+*.Sharing Code: You can reuse code between multiple apps by using npm or Atmosphere packages for public modules, or git submodules/symbolic 
+  links for private/shared code.
   Sharing Data: Apps can share data by pointing to the same MongoDB instance or interacting via an API (using DDP for server-server communication).
   Sharing Accounts: Users can be authenticated across multiple servers by sharing the login token between apps, allowing seamless movement between different parts of the system without needing to log in again.
   This structure is somewhat aligned with microservices architecture, as you are splitting functionalities (like admin panels or worker processes) into separate services/apps, each potentially with its own scaling and deployment strategy.
-*.When designing a data schema in Meteor, there are certain aspects of its data loading system and communication protocol (DDP) that influence how you should structure your data, especially when dealing with documents that have subfields that change frequently.
+*.When designing a data schema in Meteor, there are certain aspects of its data loading system and communication protocol (DDP) that 
+  influence how you should structure your data, especially when dealing with documents that have subfields that change frequently.
+  
   Key Concepts:
   Meteor's DDP and Top-Level Fields:
   
   DDP (Distributed Data Protocol) is how Meteor communicates data between the server and client.
-  DDP works at the top level of a document, meaning any change to a subfield within a document results in the entire top-level field being resent over the network.
-  For example, if you have a document that includes an array of sub-documents (like a list of todos), changing one todo requires DDP to resend the entire array of todos, even if only one todo has changed.
-  Inefficiency with Large and Complex Subfields:
+  DDP works at the top level of a document, meaning any change to a subfield within a document results in the entire top-level field being 
+  resent over the network. For example, if you have a document that includes an array of sub-documents (like a list of todos), changing one 
+  todo requires DDP to resend the entire array of todos, even if only one todo has changed.Inefficiency with Large and Complex Subfields:
   
-  In MongoDB, you might design a document that has complex fields (such as an array of objects), but in Meteor, if any part of that array changes, the entire array has to be resent.
-  This can lead to unnecessary network traffic if you're frequently modifying subfields.
+  In MongoDB, you might design a document that has complex fields (such as an array of objects), but in Meteor, if any part of that array 
+  changes, the entire array has to be resent. This can lead to unnecessary network traffic if you're frequently modifying subfields.
+
 *.After subscribing, data is stored in the client’s local Minimongo cache. To display it in the UI, you need to query the collection.  
 
-*When you subscribe to data in Meteor, the server sends specific documents to the client, which are stored in the client-side Minimongo database. The client can then query this local collection to use the data in the UI.
- but Different subscriptions push data to the same collection: In Meteor, multiple subscriptions can send data to the same local collection on the client. For example, if you have two different subscriptions to the Lists collection, one for public lists and one for private lists, both of these will send documents into the same Lists collection on the client.
- Querying all data without filters can lead to unexpected results: If you use a general query like Lists.find() (which fetches all documents in the Lists collection), you might accidentally get both public and private lists, even though you may only want one type of list in a particular UI component. This is because Lists.find() doesn’t apply any filters, and it pulls all the documents that have been subscribed to, regardless of which subscription they came from.
- always query the client-side Minimongo collection with the same filter you used when subscribing to the data. This ensures that you only get the specific subset of data that the server sent based on your subscription, preventing any unexpected or mixed results.
+*When you subscribe to data in Meteor, the server sends specific documents to the client, which are stored in the client-side Minimongo 
+ database. The client can then query this local collection to use the data in the UI. but Different subscriptions push data to the same 
+ collection: In Meteor, multiple subscriptions can send data to the same local collection on the client. For example, if you have two   
+ different subscriptions to the Lists collection, one for public lists and one for private lists, both of these will send documents into 
+ the same Lists collection on the client. Querying all data without filters can lead to unexpected results: If you use a general query 
+ like Lists.find() (which fetches all documents in the Lists collection), you might accidentally get both public and private lists, even 
+ though you may only want one type of list in a particular UI component. This is because Lists.find() doesn’t apply any filters, and it 
+ pulls all the documents that have been subscribed to, regardless of which subscription they came from.always query the client-side Minimongo
+ collection with the same filter you used when subscribing to the data. This ensures that you only get the specific subset of data that the 
+ server sent based on your subscription, preventing any unexpected or mixed results.
+
+*.methods and calls are the other method for network communication is being used by meteor for non reactive communication.but since we have a 
+  publish feature and query observer for specific collection if we make any updates on such collections by this methods then the responsible 
+  publisher will inform the subscribers about the changes
+
+  when we use to call a method, first of all in the client there will happend a simulation means it will immediately update the miniMongo and
+  reflect the change in the UI even before the server call happends so that it will imitates very responsive for the client after that only 
+  it will call the server method and once the method execute it will send the response. but it wont immediately not call the call back 
+  registered for the call in the client but will wait for if there are any sub updation once that finish only it will exectue the callback
+
+
